@@ -32,10 +32,11 @@ class AppointmentController extends Controller
         $request->validate([
             'startDate' => 'required|date',
             'endDate' => 'required|date',
+            'title' => 'string|max:255'
         ]);
 
         $authUser->appointments()->create([
-            'name' => 'Appointment reserve for '.$request->input('startDate'),
+            'name' => $request->input('title'),
             'start' => $request->input('startDate'),
             'end' => $request->input('endDate'),
             'status' => 'reserved',

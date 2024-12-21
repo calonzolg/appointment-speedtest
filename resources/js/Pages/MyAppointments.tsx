@@ -60,7 +60,7 @@ export default function Home() {
                         <div className="p-6 text-gray-900 dark:text-gray-100">
                             <Table>
                                 <TableCaption>
-                                    A list of your recent appoitments.
+                                    A list of your recent appointments.
                                 </TableCaption>
                                 <TableHeader>
                                     <TableRow>

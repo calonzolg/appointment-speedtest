@@ -1,3 +1,4 @@
+import { CreateAppointmentDialog } from '@/components/CreateAppointmentDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,12 +7,16 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-import {useEffect, useState} from 'react';
-import {toast} from "sonner";
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 dayjs.extend(isSameOrAfter);
 
-const generateTimeIntervals = (start: string, end: string, interval: number) => {
+const generateTimeIntervals = (
+    start: string,
+    end: string,
+    interval: number,
+) => {
     const times = [];
     const startHour = parseInt(start.split(':')[0], 10);
     const startMinutes = parseInt(start.split(':')[1], 10);
@@ -20,7 +25,10 @@ const generateTimeIntervals = (start: string, end: string, interval: number) => 
     let currentHour = startHour;
     let currentMinutes = startMinutes;
 
-    while (currentHour < endHour || (currentHour === endHour && currentMinutes === 0)) {
+    while (
+        currentHour < endHour ||
+        (currentHour === endHour && currentMinutes === 0)
+    ) {
         const formattedTime = `${String(currentHour).padStart(2, '0')}:${String(
             currentMinutes,
         ).padStart(2, '0')}`;
@@ -44,7 +52,9 @@ function dates(current: Date): Date[] {
         current.setDate(current.getDate() + 1);
     }
 
-    return week.filter(day => dayjs(day).isSameOrAfter(new Date()));
+    return week.filter((day) => {
+        return dayjs(day).endOf('day').isSameOrAfter(dayjs(new Date()));
+    });
 }
 
 export default function Home() {
@@ -52,36 +62,36 @@ export default function Home() {
     const [selectedDay, setSelectedDay] = useState(
         dayjs(days[0]).format('dddd MMM, D YYYY'),
     );
-    const [appointments, setAppointments] = useState([])
+    const [appointments, setAppointments] = useState([]);
+    const [title, setTitle] = useState('');
 
     async function getAppointments(daySelected: string) {
-        const parse = dayjs(daySelected).format('YYYY-MM-DD')
+        const parse = dayjs(daySelected).format('YYYY-MM-DD');
         try {
-            const response = await axios.get(`/appointments?daySelected=${parse}`)
+            const response = await axios.get(
+                `/appointments?daySelected=${parse}`,
+            );
 
             setAppointments(response.data.appointments);
         } catch (e) {
-            console.error(e)
+            console.error(e);
         }
     }
 
-    async function createAppointment(selectedTime: string) {
+    async function createAppointment(selectedTime: string, title: string) {
         const startDate = dayjs(`${selectedDay} ${selectedTime}`);
-        const endDate = startDate.add(30, "minute")
+        const endDate = startDate.add(30, 'minute');
 
         try {
             const response = await axios.post('/appointments', {
-                startDate: startDate.format(
-                    'YYYY-MM-DD HH:mm',
-                ),
-                endDate: endDate.format(
-                    'YYYY-MM-DD HH:mm'
-                )
+                startDate: startDate.format('YYYY-MM-DD HH:mm'),
+                endDate: endDate.format('YYYY-MM-DD HH:mm'),
+                title,
             });
             const status = response.status;
             if (status === 200) {
-                toast.success("Appointment has been created.");
-                await getAppointments(selectedDay)
+                toast.success('Appointment has been created.');
+                await getAppointments(selectedDay);
             }
             console.log({ status });
         } catch (e) {
@@ -92,7 +102,7 @@ export default function Home() {
     async function handleSelectedDate(value: string) {
         setSelectedDay(value);
 
-        await getAppointments(value)
+        await getAppointments(value);
     }
 
     useEffect(() => {
@@ -103,7 +113,7 @@ export default function Home() {
                 console.log('Error occured when fetching books');
             }
         })();
-    }, [])
+    }, []);
 
     const now = dayjs();
     const selectedDate = dayjs(selectedDay);
@@ -121,11 +131,14 @@ export default function Home() {
 
     const isReserved = (time: any) => {
         const [hour, minute] = time.split(':').map(Number);
-        const intervalStart = dayjs(selectedDay).hour(hour).minute(minute).second(0);
+        const intervalStart = dayjs(selectedDay)
+            .hour(hour)
+            .minute(minute)
+            .second(0);
         const intervalEnd = intervalStart.add(30, 'minute');
 
         if (appointments.length === 0) {
-            return false
+            return false;
         }
 
         return appointments.some((appointment: any) => {
@@ -187,20 +200,47 @@ export default function Home() {
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent className="mx-auto grid max-w-96 grid-cols-2 gap-4">
-                                                {filteredIntervals.length > 0 ? (
-                                                    filteredIntervals.map((time) => {
-                                                        const disabled = isReserved(time)
+                                                {filteredIntervals.length >
+                                                0 ? (
+                                                    filteredIntervals.map(
+                                                        (time) => {
+                                                            const disabled =
+                                                                isReserved(
+                                                                    time,
+                                                                );
 
-                                                        return <Button
-                                                            key={time}
-                                                            onClick={() => createAppointment(time)}
-                                                            disabled={disabled}
-                                                        >
-                                                            {time}
-                                                        </Button>
-                                                    })
+                                                            return (
+                                                                <CreateAppointmentDialog
+                                                                    key={time}
+                                                                    onSave={() =>
+                                                                        createAppointment(
+                                                                            time,
+                                                                            title,
+                                                                        )
+                                                                    }
+                                                                    title={
+                                                                        title
+                                                                    }
+                                                                    setTitle={
+                                                                        setTitle
+                                                                    }
+                                                                >
+                                                                    <Button
+                                                                        disabled={
+                                                                            disabled
+                                                                        }
+                                                                    >
+                                                                        {time}
+                                                                    </Button>
+                                                                </CreateAppointmentDialog>
+                                                            );
+                                                        },
+                                                    )
                                                 ) : (
-                                                    <p>No hay horarios disponibles para hoy.</p>
+                                                    <p>
+                                                        No hay horarios
+                                                        disponibles para hoy.
+                                                    </p>
                                                 )}
                                             </CardContent>
                                         </Card>
