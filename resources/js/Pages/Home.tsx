@@ -58,6 +58,7 @@ function dates(current: Date): Date[] {
 }
 
 export default function Home() {
+    const [week, setWeek] = useState('current')
     const [days, setDays] = useState(dates(new Date()));
     const [selectedDay, setSelectedDay] = useState(
         dayjs(days[0]).format('dddd MMM, D YYYY'),
@@ -115,6 +116,20 @@ export default function Home() {
         })();
     }, []);
 
+    useEffect(() => {
+        if (week === 'current') {
+            setDays(dates(new Date()))
+
+            return
+        }
+
+        if (week === 'next') {
+            setDays(dates(new Date(dayjs().add(1, "week").format('YYYY-MM-DD'))))
+
+            return
+        }
+    }, [week])
+
     const now = dayjs();
     const selectedDate = dayjs(selectedDay);
     const timeIntervals = generateTimeIntervals('9:00', '17:00', 30);
@@ -152,6 +167,8 @@ export default function Home() {
         });
     };
 
+
+
     return (
         <AuthenticatedLayout
             header={
@@ -165,6 +182,20 @@ export default function Home() {
             <div className="py-12">
                 <div className="mx-auto max-w-5xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
+                        <div className="p-6" >
+                            <Tabs defaultValue={'current'} onValueChange={(value: string) =>
+                                setWeek(value)
+                            }>
+                                <TabsList>
+                                    <TabsTrigger value={'current'}>
+                                        Current
+                                    </TabsTrigger>
+                                    <TabsTrigger value={'next'}>
+                                        Next Week
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                        </div>
                         <div className="p-6 text-gray-900 dark:text-gray-100">
                             <Tabs
                                 defaultValue={selectedDay}
